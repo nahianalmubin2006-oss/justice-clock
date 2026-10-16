@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMasterAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'nahianalmubin2006@gmail.com';
+    }
+
+    function isAdmin() {
+      return isMasterAdmin() ||
+        (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Admins collection
+    match /admins/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isMasterAdmin());
+      allow list: if isMasterAdmin();
+      allow write: if isMasterAdmin();
+    }
+
+    // Cases collection
+    match /cases/{caseId} {
+      // Public can get single published case; admins can get any case
+      allow get: if resource.data.publicationStatus == 'published' || isAdmin();
+
+      // For list queries: never execute exists() inside allow list
+      allow list: if resource.data.publicationStatus == 'published' || isMasterAdmin();
+
+      // Only admins can create, update, delete
+      allow create, update, delete: if isAdmin() && isValidId(caseId);
+    }
+
+    // Case Events (Timeline)
+    match /caseEvents/{eventId} {
+      allow get: if resource.data.visibility == 'public' || isAdmin();
+      allow list: if resource.data.visibility == 'public' || isMasterAdmin();
+      allow create, update, delete: if isAdmin() && isValidId(eventId);
+    }
+
+    // Case Sources
+    match /caseSources/{sourceId} {
+      allow get, list: if true; // public citations
+      allow create, update, delete: if isAdmin() && isValidId(sourceId);
+    }
+
+    // News Leads (Internal discovery queue)
+    match /newsLeads/{leadId} {
+      allow get, write: if isAdmin() && isValidId(leadId);
+      allow list: if isMasterAdmin();
+    }
+
+    // News Sources (Internal feed registry)
+    match /newsSources/{sourceId} {
+      allow get, write: if isAdmin() && isValidId(sourceId);
+      allow list: if isMasterAdmin();
+    }
+
+    // Admin Activity Audit Log
+    match /adminActivity/{activityId} {
+      allow get, create: if isAdmin() && isValidId(activityId);
+      allow list: if isMasterAdmin();
+      allow update, delete: if false; // immutable audit log
+    }
+
+    // Correction Requests
+    match /correctionRequests/{requestId} {
+      // Public can create a correction request
+      allow create: if isValidId(requestId) &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 &&
+        request.resource.data.message.size() <= 4000 &&
+        request.resource.data.status == 'pending';
+
+      // Only admins can read or manage correction requests
+      allow get, update, delete: if isAdmin() && isValidId(requestId);
+      allow list: if isMasterAdmin();
+    }
+  }
+}

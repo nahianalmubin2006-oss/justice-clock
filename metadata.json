@@ -1,0 +1,6 @@
+{
+  "name": "Justice Clock — Bangladesh",
+  "description": "Frontend prototype tracking time elapsed since reported incidents with bilingual English and Bengali support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

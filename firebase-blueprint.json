@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "Case": {
+      "title": "Case",
+      "description": "A legal tracking record for an incident",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "description": "Unique identifier like JC-BD-0001" },
+        "titleBn": { "type": "string", "maxLength": 256, "description": "Public title in Bengali" },
+        "titleEn": { "type": "string", "maxLength": 256, "description": "Public title in English" },
+        "incidentDate": { "type": "string", "maxLength": 32, "description": "ISO date of incident" },
+        "datePrecision": { "type": "string", "enum": ["day", "month", "unknown"] },
+        "dateExplanation": { "type": "string", "maxLength": 1000 },
+        "complaintDate": { "type": "string", "maxLength": 32 },
+        "district": { "type": "string", "maxLength": 64 },
+        "locationDetails": { "type": "string", "maxLength": 256 },
+        "courtName": { "type": "string", "maxLength": 256 },
+        "legalStatus": { "type": "string", "enum": ["investigation", "awaiting_trial", "trial", "judgment", "appeal", "other", "unverified"] },
+        "verificationStatus": { "type": "string", "enum": ["unverified", "partial", "verified"] },
+        "lastVerifiedAt": { "type": "string", "maxLength": 32 },
+        "publicationStatus": { "type": "string", "enum": ["draft", "published", "archived"] },
+        "internalNotes": { "type": "string", "maxLength": 5000 },
+        "createdAt": { "type": "string", "maxLength": 32 },
+        "updatedAt": { "type": "string", "maxLength": 32 },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "titleBn", "titleEn", "datePrecision", "district", "legalStatus", "verificationStatus", "publicationStatus"]
+    },
+    "CaseEvent": {
+      "title": "CaseEvent",
+      "description": "Chronological timeline event belonging to a case",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string", "maxLength": 64 },
+        "stage": { "type": "string", "enum": ["reported", "filed", "investigation", "trial", "judgment", "appeal", "other"] },
+        "eventDate": { "type": "string", "maxLength": 32 },
+        "titleBn": { "type": "string", "maxLength": 256 },
+        "titleEn": { "type": "string", "maxLength": 256 },
+        "verificationStatus": { "type": "string", "enum": ["unverified", "partial", "verified"] },
+        "visibility": { "type": "string", "enum": ["public", "internal"] },
+        "createdAt": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["caseId", "stage", "titleBn", "titleEn", "visibility"]
+    },
+    "CaseSource": {
+      "title": "CaseSource",
+      "description": "Verified source citation supporting case information",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string", "maxLength": 64 },
+        "publisher": { "type": "string", "maxLength": 256 },
+        "url": { "type": "string", "maxLength": 1024 },
+        "sourceType": { "type": "string", "enum": ["court_record", "reputable_news", "official_statement", "other"] },
+        "publicationDate": { "type": "string", "maxLength": 32 },
+        "dateAccessed": { "type": "string", "maxLength": 32 },
+        "verificationStatus": { "type": "string", "enum": ["unverified", "partial", "verified"] },
+        "notes": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["caseId", "publisher", "url", "sourceType", "verificationStatus"]
+    },
+    "NewsLead": {
+      "title": "NewsLead",
+      "description": "Discovered news report lead awaiting human review",
+      "type": "object",
+      "properties": {
+        "headline": { "type": "string", "maxLength": 512 },
+        "publisher": { "type": "string", "maxLength": 256 },
+        "articleUrl": { "type": "string", "maxLength": 1024 },
+        "publishedAt": { "type": "string", "maxLength": 32 },
+        "retrievedAt": { "type": "string", "maxLength": 32 },
+        "excerpt": { "type": "string", "maxLength": 2048 },
+        "aiSummary": { "type": "string", "maxLength": 4096 },
+        "aiConfidence": { "type": "number" },
+        "suggestedIncidentDate": { "type": "string", "maxLength": 32 },
+        "suggestedDistrict": { "type": "string", "maxLength": 64 },
+        "suggestedStatus": { "type": "string", "maxLength": 64 },
+        "reviewStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "duplicate", "archived"] },
+        "reviewerNotes": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["headline", "publisher", "articleUrl", "reviewStatus"]
+    },
+    "NewsSource": {
+      "title": "NewsSource",
+      "description": "Configured news publisher RSS or API feed",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 256 },
+        "feedUrl": { "type": "string", "maxLength": 1024 },
+        "sourceType": { "type": "string", "enum": ["rss", "api", "official"] },
+        "enabled": { "type": "boolean" },
+        "lastCheckedAt": { "type": "string", "maxLength": 32 },
+        "lastError": { "type": "string", "maxLength": 1024 },
+        "updateFrequencyMinutes": { "type": "number" }
+      },
+      "required": ["name", "feedUrl", "sourceType", "enabled"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized administrator profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 256 },
+        "role": { "type": "string", "enum": ["superadmin", "editor"] },
+        "addedAt": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["email", "role"]
+    },
+    "AdminActivity": {
+      "title": "AdminActivity",
+      "description": "Audit log for administrative changes",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "maxLength": 128 },
+        "targetType": { "type": "string", "maxLength": 64 },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 256 },
+        "timestamp": { "type": "string", "maxLength": 32 },
+        "details": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["action", "targetType", "targetId", "userEmail", "timestamp"]
+    },
+    "CorrectionRequest": {
+      "title": "CorrectionRequest",
+      "description": "User submitted correction or removal suggestion in private queue",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string", "maxLength": 64 },
+        "message": { "type": "string", "maxLength": 3000 },
+        "contactEmail": { "type": "string", "maxLength": 256 },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "resolved"] },
+        "createdAt": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["message", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/cases/{caseId}": {
+      "schema": { "$ref": "#/entities/Case" },
+      "description": "Master cases repository"
+    },
+    "/caseEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/CaseEvent" },
+      "description": "Timeline events belonging to cases"
+    },
+    "/caseSources/{sourceId}": {
+      "schema": { "$ref": "#/entities/CaseSource" },
+      "description": "Supporting sources and citations"
+    },
+    "/newsLeads/{leadId}": {
+      "schema": { "$ref": "#/entities/NewsLead" },
+      "description": "Discovered news reports awaiting verification"
+    },
+    "/newsSources/{sourceId}": {
+      "schema": { "$ref": "#/entities/NewsSource" },
+      "description": "Registry of automated discovery feeds"
+    },
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Allowlist and roles for authenticated administrators"
+    },
+    "/adminActivity/{activityId}": {
+      "schema": { "$ref": "#/entities/AdminActivity" },
+      "description": "Immutable administrative audit log"
+    },
+    "/correctionRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/CorrectionRequest" },
+      "description": "Private queue for public correction or removal suggestions"
+    }
+  }
+}
