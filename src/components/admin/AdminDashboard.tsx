@@ -78,6 +78,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Filters for cases
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | PublicationStatus>('all');
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleSignIn = async () => {
+    if (isSigningIn) return;
+    setIsSigningIn(true);
+    try {
+      const cred = await loginWithGoogle();
+      if (cred?.user) {
+        onToast(`Signed in as ${cred.user.email}`);
+      }
+    } catch (err: any) {
+      console.warn('Sign-in issue:', err);
+      onToast(err?.message || 'Google sign-in could not be completed.');
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logoutUser();
+      onToast('Signed out successfully.');
+    } catch (err: any) {
+      onToast('Sign out error: ' + err.message);
+    }
+  };
 
   // Track Auth state
   useEffect(() => {
@@ -237,18 +263,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </span>
               </div>
               <button
-                onClick={() => logoutUser()}
-                className="bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded text-white flex items-center gap-1 transition-colors"
+                onClick={handleSignOut}
+                className="bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded text-white flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <LogOut size={13} /> Sign Out
               </button>
             </div>
           ) : (
             <button
-              onClick={() => loginWithGoogle()}
-              className="bg-[#8B1E2D] hover:bg-[#6f1824] px-3 py-1.5 rounded text-white font-semibold flex items-center gap-1.5 transition-colors"
+              onClick={handleSignIn}
+              disabled={isSigningIn}
+              className="bg-[#8B1E2D] hover:bg-[#6f1824] disabled:opacity-60 px-3 py-1.5 rounded text-white font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <LogIn size={13} /> Sign In with Google
+              <LogIn size={13} className={isSigningIn ? 'animate-spin' : ''} />
+              <span>{isSigningIn ? 'Signing In...' : 'Sign In with Google'}</span>
             </button>
           )}
         </div>
@@ -267,14 +295,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
-                onClick={() => loginWithGoogle()}
-                className="btn-primary !py-2.5 !px-6 text-sm flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm"
+                onClick={handleSignIn}
+                disabled={isSigningIn}
+                className="btn-primary !py-2.5 !px-6 text-sm flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm disabled:opacity-60 cursor-pointer"
               >
-                <LogIn size={16} /> Sign In with Google
+                <LogIn size={16} className={isSigningIn ? 'animate-spin' : ''} />
+                <span>{isSigningIn ? 'Opening Google Sign-In...' : 'Sign In with Google'}</span>
               </button>
               <button
                 onClick={onBackToPublic}
-                className="btn-ghost !py-2.5 !px-5 text-sm w-full sm:w-auto"
+                className="btn-ghost !py-2.5 !px-5 text-sm w-full sm:w-auto cursor-pointer"
               >
                 Back to Public Tracker
               </button>

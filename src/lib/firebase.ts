@@ -29,7 +29,24 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export async function loginWithGoogle() {
-  return await signInWithPopup(auth, googleProvider);
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error: any) {
+    if (
+      error?.code === 'auth/popup-closed-by-user' ||
+      error?.code === 'auth/cancelled-popup-request'
+    ) {
+      console.info('Google sign-in popup was dismissed or closed by the user.');
+      return null;
+    }
+    if (error?.code === 'auth/popup-blocked') {
+      console.warn('Google sign-in popup was blocked by the browser.');
+      throw new Error(
+        'Sign-in popup was blocked by your browser. Please allow popups for this site and try again.'
+      );
+    }
+    throw error;
+  }
 }
 
 export async function logoutUser() {
