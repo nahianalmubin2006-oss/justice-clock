@@ -6,7 +6,13 @@ import {
   DEFAULT_NEWS_SOURCES,
   fetchAndFilterNews,
   analyzeNewsWithGemini,
+  getPublicNewsArticles,
 } from './src/server/newsDiscovery';
+import {
+  getJudicialStatsData,
+  probeOfficialSources,
+  refreshJudicialStats,
+} from './src/server/judicialStatsService';
 
 dotenv.config();
 
@@ -18,10 +24,39 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// In-memory news sources registry (can be augmented dynamically)
+// In-memory news sources registry
 let newsSources = [...DEFAULT_NEWS_SOURCES];
 // Cache of recent discovered leads
 let discoveredLeadsCache: any[] = [];
+
+// Rate-limiting tracker for refresh endpoint
+let lastManualRefreshTime = 0;
+const REFRESH_COOLDOWN_MS = 30 * 1000; // 30 seconds cooldown
+
+// URL validation helper to prevent SSRF attacks
+function isSafePublicUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('172.16.') ||
+      hostname.startsWith('169.254.')
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // 1. Health check & Config status
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -30,10 +65,102 @@ app.get('/api/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     geminiConfigured: !!process.env.GEMINI_API_KEY,
     firebaseProject: 'ultra-wall-9smzh',
+    realTimeJudicialEngine: 'active',
   });
 });
 
-// 2. Automated News Discovery trigger
+// 2. Verified Judicial Statistics Endpoint
+app.get('/api/judicial-stats', async (_req: Request, res: Response) => {
+  try {
+    const data = await getJudicialStatsData();
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      ...data,
+    });
+  } catch (error: any) {
+    console.error('Judicial stats retrieval error:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Error fetching judicial statistics.',
+    });
+  }
+});
+
+// 3. Official Data Sources & Status Endpoint
+app.get('/api/judicial-stats/sources', async (_req: Request, res: Response) => {
+  try {
+    const sources = await probeOfficialSources();
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      sources,
+    });
+  } catch (error: any) {
+    console.error('Data source status probe error:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Error probing data sources.',
+    });
+  }
+});
+
+// 4. Rate-limited Refresh Endpoint
+app.post('/api/judicial-stats/refresh', async (req: Request, res: Response) => {
+  const now = Date.now();
+  if (now - lastManualRefreshTime < REFRESH_COOLDOWN_MS) {
+    const waitSeconds = Math.ceil((REFRESH_COOLDOWN_MS - (now - lastManualRefreshTime)) / 1000);
+    return res.status(429).json({
+      success: false,
+      error: `Refresh rate limited. Please wait ${waitSeconds}s before requesting again.`,
+    });
+  }
+
+  try {
+    lastManualRefreshTime = now;
+    // Check optional admin header if provided
+    const authHeader = req.headers.authorization;
+    const isAuthorized = authHeader ? true : false;
+
+    const result = await refreshJudicialStats(true);
+    // Also invalidate news cache
+    await getPublicNewsArticles(true);
+
+    res.json({
+      ...result,
+      message: 'Judicial statistics and source statuses refreshed successfully.',
+      authorizedRefresh: isAuthorized,
+    });
+  } catch (error: any) {
+    console.error('Refresh error:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Refresh failed.',
+    });
+  }
+});
+
+// 5. Genuine Public News Feed Endpoint (Server-side Cached)
+app.get('/api/news/public', async (_req: Request, res: Response) => {
+  try {
+    const newsData = await getPublicNewsArticles(false);
+    res.json({
+      success: true,
+      ...newsData,
+    });
+  } catch (error: any) {
+    console.error('Public news fetch error:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Could not fetch public news.',
+      articles: [],
+      lastUpdated: new Date().toISOString(),
+      isStale: true,
+    });
+  }
+});
+
+// 6. Automated News Discovery trigger (Admin Queue)
 app.post('/api/news/discover', async (_req: Request, res: Response) => {
   try {
     const rawArticles = await fetchAndFilterNews(newsSources);
@@ -71,22 +198,29 @@ app.post('/api/news/discover', async (_req: Request, res: Response) => {
   }
 });
 
-// 3. News sources registry
+// 7. News sources registry
 app.get('/api/news/sources', (_req: Request, res: Response) => {
   res.json({ sources: newsSources });
 });
 
-// 4. Test adding or checking a feed
+// 8. Test adding or checking a feed (With SSRF security validation)
 app.post('/api/news/test-feed', async (req: Request, res: Response) => {
   const { name, feedUrl, sourceType } = req.body;
   if (!name || !feedUrl) {
     return res.status(400).json({ error: 'Name and feedUrl are required.' });
   }
 
+  // SSRF prevention: validate URL before fetching
+  if (!isSafePublicUrl(feedUrl)) {
+    return res.status(400).json({
+      error: 'Invalid or restricted feed URL. Only public HTTP/HTTPS URLs are allowed.',
+    });
+  }
+
   const newSource = {
     id: `src-${Date.now()}`,
-    name,
-    feedUrl,
+    name: String(name).slice(0, 100).trim(),
+    feedUrl: String(feedUrl).slice(0, 500).trim(),
     sourceType: sourceType || 'rss',
     enabled: true,
     lastCheckedAt: null,
@@ -111,7 +245,7 @@ app.post('/api/news/test-feed', async (req: Request, res: Response) => {
   }
 });
 
-// 5. Public Correction Request submission
+// 9. Public Correction Request submission
 app.post('/api/corrections', (req: Request, res: Response) => {
   const { caseId, message, contactEmail } = req.body;
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -132,7 +266,6 @@ app.post('/api/corrections', (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   };
 
-  // We log and return success
   console.log('New correction request received for case:', cleanCaseId);
   res.status(201).json({
     success: true,
@@ -141,7 +274,7 @@ app.post('/api/corrections', (req: Request, res: Response) => {
   });
 });
 
-// 6. Admin bootstrap check
+// 10. Admin bootstrap check
 app.post('/api/admin/bootstrap', (req: Request, res: Response) => {
   const { email } = req.body;
   const isSuperadmin = email === 'nahianalmubin2006@gmail.com';
@@ -171,7 +304,11 @@ async function setupVite() {
   }
 
   app.listen(port, () => {
-    console.log(`Justice Clock server listening on port ${port} (mode: ${isDev ? 'development' : 'production'})`);
+    console.log(
+      `Justice Clock server listening on port ${port} (mode: ${
+        isDev ? 'development' : 'production'
+      })`
+    );
   });
 }
 

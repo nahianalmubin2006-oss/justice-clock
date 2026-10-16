@@ -165,3 +165,114 @@ export interface StatItem {
   key: string;
   count: number;
 }
+
+export interface JudicialSummaryStats {
+  totalPendingNationwide: number;
+  subordinatePending: number;
+  subordinateCivilPending: number;
+  subordinateCriminalPending: number;
+  subordinateDisposalsAnnual: number;
+  subordinateCivilDisposalsAnnual: number;
+  subordinateCriminalDisposalsAnnual: number;
+  highCourtPending: number;
+  highCourtCivilPending: number;
+  highCourtCriminalPending: number;
+  appellatePending: number;
+  appellateCivilPending: number;
+  appellateCriminalPending: number;
+  supremeCourtDrive2026: {
+    period: string;
+    filings: number;
+    disposals: number;
+    netReduction: number;
+    clearanceRate: number;
+    pendingStart: number;
+    pendingEnd: number;
+    appellate: {
+      filings: number;
+      disposals: number;
+      pendingStart: number;
+      pendingEnd: number;
+      clearanceRate: number;
+      netReduction: number;
+    };
+    highCourt: {
+      filings: number;
+      disposals: number;
+      pendingStart: number;
+      pendingEnd: number;
+      clearanceRate: number;
+      netReduction: number;
+    };
+  };
+  reportingDate: string;
+  asOfDate: string;
+  lastSuccessfulFetch: string;
+  isStale: boolean;
+  status: 'current' | 'periodic' | 'stale' | 'unavailable';
+  sourceAttribution: string;
+  sourceUrl: string;
+}
+
+export interface CourtWiseCaseload {
+  courtId: 'supreme_court_all' | 'appellate_division' | 'high_court_division' | 'subordinate_courts';
+  nameEn: string;
+  nameBn: string;
+  pending: number;
+  filings: number | null;
+  disposals: number | null;
+  clearanceRate: number | null;
+  reportingPeriod: string;
+  reportingDate: string;
+  civilPending?: number;
+  criminalPending?: number;
+  notesEn: string;
+  notesBn: string;
+}
+
+export interface DivisionWiseCaseload {
+  division: District;
+  divisionNameEn: string;
+  divisionNameBn: string;
+  estimatedPending: number;
+  percentageOfNational: number;
+  activeTribunalsCount: number;
+  primaryCourts: string[];
+  notesEn: string;
+  notesBn: string;
+}
+
+export interface YearlyTrend {
+  year: number;
+  court: string;
+  filings: number | null;
+  disposals: number;
+  pending: number;
+  clearanceRate: number | null;
+  notes: string;
+}
+
+export interface DataSourceStatus {
+  id: string;
+  name: string;
+  category: 'official_judiciary' | 'parliament_record' | 'news_feed';
+  url: string;
+  reportingDate: string;
+  lastCheckedAt: string;
+  status: 'current' | 'periodic' | 'delayed' | 'stale' | 'unavailable';
+  coverage: string;
+  coverageBn: string;
+  updateFrequency: string;
+  verificationNotes: string;
+}
+
+export interface PublicNewsArticle {
+  id: string;
+  headline: string;
+  publisher: string;
+  articleUrl: string;
+  publishedAt: string;
+  retrievedAt: string;
+  excerpt: string;
+  category?: string;
+}

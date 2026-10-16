@@ -102,11 +102,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Navigation Links */}
           <nav
-            className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-semibold text-[#26211F]"
+            className="hidden md:flex items-center gap-5 lg:gap-7 text-sm font-semibold text-[#26211F]"
             aria-label="Main"
           >
             <a className="navlink whitespace-nowrap shrink-0" href="#home">
               {t.nav_home}
+            </a>
+            <a className="navlink whitespace-nowrap shrink-0" href="#stats">
+              {lang === 'bn' ? 'পরিসংখ্যান' : 'Statistics'}
+            </a>
+            <a className="navlink whitespace-nowrap shrink-0" href="#news">
+              {lang === 'bn' ? 'সংবাদ' : 'News'}
             </a>
             <a className="navlink whitespace-nowrap shrink-0" href="#tracker">
               {t.nav_tracker}
@@ -167,6 +173,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={closeMobileMenu}
             >
               {t.nav_home}
+            </a>
+            <a
+              className="py-2 text-[#161211] font-semibold hover:text-[#8B1E2D] transition-colors"
+              href="#stats"
+              onClick={closeMobileMenu}
+            >
+              {lang === 'bn' ? 'পরিসংখ্যান' : 'Statistics'}
+            </a>
+            <a
+              className="py-2 text-[#161211] font-semibold hover:text-[#8B1E2D] transition-colors"
+              href="#news"
+              onClick={closeMobileMenu}
+            >
+              {lang === 'bn' ? 'সংবাদ' : 'News'}
             </a>
             <a
               className="py-2 text-[#161211] font-semibold hover:text-[#8B1E2D] transition-colors"

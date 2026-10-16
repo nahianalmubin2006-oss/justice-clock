@@ -1,0 +1,8 @@
+{
+  "firestore": {
+    "databaseId": "ai-studio-justiceclockbang-4d13f798-9412-43fa-b914-f5786461da47",
+    "rules": "firestore.rules",
+    "edition": "ENTERPRISE",
+    "dataAccessMode": "FIRESTORE_NATIVE"
+  }
+}

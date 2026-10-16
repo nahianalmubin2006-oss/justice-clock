@@ -5,6 +5,9 @@ import { CASES } from './data/cases';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Stats } from './components/Stats';
+import { JudicialVisualizations } from './components/JudicialVisualizations';
+import { JusticeNewsSection } from './components/JusticeNewsSection';
+import { DataTransparencySection } from './components/DataTransparencySection';
 import { Featured } from './components/Featured';
 import { Tracker } from './components/Tracker';
 import { AboutSection } from './components/AboutSection';
@@ -184,10 +187,16 @@ export default function App() {
         {/* A. Hero section with live clock */}
         <Hero lang={lang} now={now} />
 
-        {/* B. Overview Stats counters synchronized with live database */}
-        <Stats lang={lang} cases={liveCases} />
+        {/* B. Overview Stats counters synchronized with official judicial disclosures & live database */}
+        <Stats lang={lang} cases={liveCases} onToast={showToast} />
 
-        {/* C. Featured Cases with live timers */}
+        {/* C. Court-Wise & Regional Judicial Analytics and Trends */}
+        <JudicialVisualizations lang={lang} />
+
+        {/* D. Verified Live Judicial & Legal Media Monitor */}
+        <JusticeNewsSection lang={lang} />
+
+        {/* E. Featured Cases with live timers */}
         <Featured
           lang={lang}
           now={now}
@@ -195,7 +204,7 @@ export default function App() {
           onOpenDetails={(c) => setSelectedCase(c)}
         />
 
-        {/* D. Full Interactive Case Tracker with filters & sorting */}
+        {/* F. Full Interactive Case Tracker with filters & sorting */}
         <Tracker
           lang={lang}
           now={now}
@@ -205,10 +214,13 @@ export default function App() {
           onOpenAdmin={handleOpenAdmin}
         />
 
-        {/* E. About & Methodology */}
+        {/* G. Data Source Transparency & Integrity Verification */}
+        <DataTransparencySection lang={lang} />
+
+        {/* H. About & Methodology */}
         <AboutSection lang={lang} />
 
-        {/* F. Action Section */}
+        {/* I. Action Section */}
         <ActionSection
           lang={lang}
           onShare={handleShare}
