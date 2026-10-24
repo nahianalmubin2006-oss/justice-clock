@@ -1,4 +1,18 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+
+function expect<T>(actual: T) {
+  return {
+    toBe: (expected: any) => assert.strictEqual(actual, expected),
+    toBeNull: () => assert.strictEqual(actual, null),
+    toBeDefined: () => assert.notStrictEqual(actual, undefined),
+    toBeGreaterThan: (n: number) => assert.ok((actual as any) > n, `${actual} should be > ${n}`),
+    toBeGreaterThanOrEqual: (n: number) => assert.ok((actual as any) >= n, `${actual} should be >= ${n}`),
+    toHaveLength: (n: number) => assert.strictEqual((actual as any).length, n),
+    toContain: (item: any) => assert.ok((actual as any).includes(item), `${actual} should contain ${item}`),
+    toMatch: (reg: RegExp) => assert.match(String(actual), reg),
+  };
+}
 import {
   calculateClearanceRate,
   OFFICIAL_SUMMARY_STATS,
