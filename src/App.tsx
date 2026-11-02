@@ -185,7 +185,12 @@ export default function App() {
 
       <main id="main" className="flex-1">
         {/* A. Hero section with live clock */}
-        <Hero lang={lang} now={now} />
+        <Hero
+          lang={lang}
+          now={now}
+          cases={liveCases}
+          onOpenDetails={(c) => setSelectedCase(c)}
+        />
 
         {/* B. Overview Stats counters synchronized with official judicial disclosures & live database */}
         <Stats lang={lang} cases={liveCases} onToast={showToast} />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Language } from '../types';
 import { I18N } from '../data/i18n';
-import { Menu, X, ShieldCheck, Globe, Radio } from 'lucide-react';
+import { Menu, X, ShieldCheck, Globe } from 'lucide-react';
 
 interface NavbarProps {
   lang: Language;
@@ -29,41 +29,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <>
-      {/* Top Forensic Status Bar */}
-      <div className="bg-[#161211] text-[#E4DED7] text-[11px] font-mono py-1 px-4 border-b border-[#2d2624] overflow-hidden">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-white font-semibold tracking-wider text-[10px] uppercase">
-              {lang === 'bn' ? 'সক্রিয় নজরদারি' : 'MONITORING ACTIVE'}
-            </span>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-4 text-[#9c938c] text-[10px] uppercase tracking-wider truncate">
-            <span>{lang === 'bn' ? 'বাংলাদেশ ইনসিডেন্ট ডাটাবেস' : 'BANGLADESH INCIDENT DATABASE'}</span>
-            <span>·</span>
-            <span>{lang === 'bn' ? 'রিয়েল-টাইম ক্রোনোমিটার' : 'REAL-TIME CHRONOMETER'}</span>
-            <span>·</span>
-            <span>{lang === 'bn' ? 'আইনি কার্যধারা পর্যবেক্ষণ' : 'JUDICIAL MILESTONE TRACKING'}</span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 text-[10px] text-[#C29B38]">
-            <Radio size={11} className="animate-pulse" />
-            <span className="font-semibold tracking-wide">UTC+06:00 BST</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Sticky Navbar */}
-      <header
-        id="nav"
-        className={`sticky top-0 z-40 transition-all duration-200 ${
-          scrolled
-            ? 'bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E4DED7] shadow-sm'
-            : 'bg-[#FAF8F5]/70 backdrop-blur-xs'
-        }`}
-      >
+    <header
+      id="nav"
+      className={`sticky top-0 z-40 transition-all duration-200 ${
+        scrolled
+          ? 'bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E4DED7] shadow-xs'
+          : 'bg-[#FAF8F5]/85 backdrop-blur-xs border-b border-[#E4DED7]/60'
+      }`}
+    >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-6">
           {/* Brand Logo & Wordmark */}
           <a
@@ -227,7 +200,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </nav>
         )}
-      </header>
-    </>
+    </header>
   );
 };
